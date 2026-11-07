@@ -14,7 +14,8 @@ the real robot and a simulator. The rest of the backend depends only on this int
 
 - Step 4: contract tests (`tests/contract/`), run against every `RobotPort` implementation.
 
-The API is not implemented yet. The simulator does not reproduce
+- Step 5a: FastAPI application (`src/picrawler_backend/api/`) with operator token authentication.
+  Connection loss detection is not implemented yet. The simulator does not reproduce
 mechanical effects such as drift: it is not evidence of the real robot behaviour.
 
 ## Layout
@@ -23,7 +24,9 @@ mechanical effects such as drift: it is not evidence of the real robot behaviour
 |---|---|
 | `src/picrawler_backend/domain/` | `RobotPort` interface, data types and safety layer, no framework dependency |
 | `src/picrawler_backend/adapters/` | `RobotPort` implementations (`SimulatedRobot`) |
+| `src/picrawler_backend/api/` | FastAPI application |
 | `tests/unit/` | Unit tests |
+| `tests/api/` | API tests |
 | `tests/contract/` | Behaviour required from every `RobotPort` implementation |
 
 ## Local setup
@@ -38,6 +41,16 @@ python -m pytest
 ```
 
 Requires Python 3.12 or later. Coverage below 80 % fails the test run.
+
+## Run the API locally
+
+```
+export API_TOKEN=<token of at least 32 characters>   # Windows: set API_TOKEN=...
+uvicorn --factory picrawler_backend.api:create_app --reload
+```
+
+Interactive documentation: http://127.0.0.1:8000/docs. Every route except `/health` requires
+the header `Authorization: Bearer <API_TOKEN>`.
 
 ## Configuration
 
