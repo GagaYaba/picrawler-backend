@@ -15,7 +15,8 @@ the real robot and a simulator. The rest of the backend depends only on this int
 - Step 4: contract tests (`tests/contract/`), run against every `RobotPort` implementation.
 
 - Step 5a: FastAPI application (`src/picrawler_backend/api/`) with operator token authentication.
-  Connection loss detection is not implemented yet. The simulator does not reproduce
+- Step 5b: connection watchdog. The operator interface calls `POST /heartbeat` regularly;
+  after `HEARTBEAT_TIMEOUT_S` seconds (default 2) without heartbeat, the robot sits down. The simulator does not reproduce
 mechanical effects such as drift: it is not evidence of the real robot behaviour.
 
 ## Layout

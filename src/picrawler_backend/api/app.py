@@ -4,8 +4,11 @@ Every route except ``/health`` requires the operator token, sent as
 ``Authorization: Bearer <token>``. All commands go through ``SafeRobot``.
 """
 
+import asyncio
+import contextlib
 import os
 import secrets
+from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -15,6 +18,8 @@ from pydantic import BaseModel, Field
 
 from picrawler_backend.adapters import SimulatedRobot
 from picrawler_backend.domain import (
+    MIN_INTERVAL_S,
+    ConnectionWatchdog,
     Direction,
     EmergencyStopActiveError,
     Posture,
@@ -25,6 +30,9 @@ from picrawler_backend.domain import (
 )
 
 MIN_TOKEN_LENGTH = 32
+# Hypothesis to confirm: the operator interface sends a heartbeat every 0.5 s,
+# so 2 s without heartbeat means the connection is lost.
+DEFAULT_HEARTBEAT_TIMEOUT_S = 2.0
 
 
 class SpeedCommand(BaseModel):
@@ -59,13 +67,24 @@ def robot_from_environment() -> RobotPort:
     raise RuntimeError(f"unsupported ROBOT_MODE: {mode!r}")
 
 
-def create_app(robot: RobotPort | None = None, api_token: str | None = None) -> FastAPI:
+def create_app(
+    robot: RobotPort | None = None,
+    api_token: str | None = None,
+    heartbeat_timeout_s: float | None = None,
+    watchdog_period_s: float = MIN_INTERVAL_S,
+) -> FastAPI:
     """Create the API. Refuses to start without a strong enough operator token."""
     token = api_token if api_token is not None else os.environ.get("API_TOKEN", "")
     if len(token) < MIN_TOKEN_LENGTH:
         raise RuntimeError(f"API_TOKEN must be set and at least {MIN_TOKEN_LENGTH} characters")
 
     safe_robot = SafeRobot(robot if robot is not None else robot_from_environment())
+    timeout = (
+        heartbeat_timeout_s
+        if heartbeat_timeout_s is not None
+        else float(os.environ.get("HEARTBEAT_TIMEOUT_S", DEFAULT_HEARTBEAT_TIMEOUT_S))
+    )
+    watchdog = ConnectionWatchdog(safe_robot.on_connection_lost, timeout_s=timeout)
     bearer = HTTPBearer(auto_error=False)
 
     def require_operator(
@@ -80,7 +99,20 @@ def create_app(robot: RobotPort | None = None, api_token: str | None = None) -> 
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    app = FastAPI(title="PiCrawler control API", version="0.1.0")
+    async def watch_connection() -> None:
+        while True:
+            await asyncio.sleep(watchdog_period_s)
+            await watchdog.check()
+
+    @contextlib.asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        task = asyncio.create_task(watch_connection())
+        yield
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+    app = FastAPI(title="PiCrawler control API", version="0.1.0", lifespan=lifespan)
     operator = [Depends(require_operator)]
 
     @app.exception_handler(SafetyLimitError)
@@ -94,6 +126,10 @@ def create_app(robot: RobotPort | None = None, api_token: str | None = None) -> 
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.post("/heartbeat", status_code=204, dependencies=operator)
+    async def heartbeat() -> None:
+        watchdog.heartbeat()
 
     @app.get("/telemetry", dependencies=operator)
     async def telemetry() -> TelemetryResponse:

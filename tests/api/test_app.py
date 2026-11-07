@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -58,3 +60,15 @@ def test_emergency_stop_blocks_commands_until_reset(client):
 
     client.post("/emergency-stop/reset", headers=AUTH)
     assert client.post("/commands/walk", json=WALK, headers=AUTH).status_code == 204
+
+
+def test_lost_heartbeat_puts_robot_in_sitting_position(simulator):
+    app = create_app(
+        robot=simulator, api_token=TOKEN, heartbeat_timeout_s=0.1, watchdog_period_s=0.02
+    )
+    with TestClient(app) as client:
+        client.post("/commands/stand", json={"speed": 50}, headers=AUTH)
+        client.post("/heartbeat", headers=AUTH)
+        time.sleep(0.6)
+
+        assert client.get("/telemetry", headers=AUTH).json()["posture"] == "sitting"

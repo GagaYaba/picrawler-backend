@@ -16,11 +16,13 @@ from picrawler_backend.domain.safety import (
     SafeRobot,
     SafetyLimitError,
 )
+from picrawler_backend.domain.watchdog import ConnectionWatchdog
 
 __all__ = [
     "MAX_SAFE_SPEED",
     "MIN_INTERVAL_S",
     "MIN_SAFE_SPEED",
+    "ConnectionWatchdog",
     "Direction",
     "EmergencyStopActiveError",
     "Posture",
