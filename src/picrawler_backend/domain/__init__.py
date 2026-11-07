@@ -9,13 +9,25 @@ from picrawler_backend.domain.robot_port import (
     Telemetry,
     TurnDirection,
 )
+from picrawler_backend.domain.safety import (
+    MAX_SAFE_SPEED,
+    MIN_INTERVAL_S,
+    MIN_SAFE_SPEED,
+    SafeRobot,
+    SafetyLimitError,
+)
 
 __all__ = [
+    "MAX_SAFE_SPEED",
+    "MIN_INTERVAL_S",
+    "MIN_SAFE_SPEED",
     "Direction",
     "EmergencyStopActiveError",
     "Posture",
     "RobotError",
     "RobotPort",
+    "SafeRobot",
+    "SafetyLimitError",
     "Telemetry",
     "TurnDirection",
 ]
