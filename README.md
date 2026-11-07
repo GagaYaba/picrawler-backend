@@ -7,6 +7,8 @@ the real robot and a simulator. The rest of the backend depends only on this int
 
 ## Status
 
+![CI](https://github.com/GagaYaba/picrawler-backend/actions/workflows/ci.yml/badge.svg)
+
 - Step 1: project skeleton and `RobotPort` interface.
 - Step 2: `SimulatedRobot`, an in-memory implementation (posture, emergency stop, estimated pose).
 - Step 3: `SafeRobot`, a safety layer wrapping any `RobotPort`: speed 20 to 70, 0.25 s between
@@ -16,7 +18,9 @@ the real robot and a simulator. The rest of the backend depends only on this int
 
 - Step 5a: FastAPI application (`src/picrawler_backend/api/`) with operator token authentication.
 - Step 5b: connection watchdog. The operator interface calls `POST /heartbeat` regularly;
-  after `HEARTBEAT_TIMEOUT_S` seconds (default 2) without heartbeat, the robot sits down. The simulator does not reproduce
+  after `HEARTBEAT_TIMEOUT_S` seconds (default 2) without heartbeat, the robot sits down.
+- Step 6: continuous integration (`.github/workflows/ci.yml`): lint, format, tests with
+  coverage and dependency audit on Python 3.12 and 3.13, at every push and pull request. The simulator does not reproduce
 mechanical effects such as drift: it is not evidence of the real robot behaviour.
 
 ## Layout
