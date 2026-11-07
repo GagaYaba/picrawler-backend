@@ -12,6 +12,8 @@ the real robot and a simulator. The rest of the backend depends only on this int
 - Step 3: `SafeRobot`, a safety layer wrapping any `RobotPort`: speed 20 to 70, 0.25 s between
   actions, one command at a time, immediate emergency stop, sitting position on connection loss.
 
+- Step 4: contract tests (`tests/contract/`), run against every `RobotPort` implementation.
+
 The API is not implemented yet. The simulator does not reproduce
 mechanical effects such as drift: it is not evidence of the real robot behaviour.
 
@@ -22,6 +24,7 @@ mechanical effects such as drift: it is not evidence of the real robot behaviour
 | `src/picrawler_backend/domain/` | `RobotPort` interface, data types and safety layer, no framework dependency |
 | `src/picrawler_backend/adapters/` | `RobotPort` implementations (`SimulatedRobot`) |
 | `tests/unit/` | Unit tests |
+| `tests/contract/` | Behaviour required from every `RobotPort` implementation |
 
 ## Local setup
 

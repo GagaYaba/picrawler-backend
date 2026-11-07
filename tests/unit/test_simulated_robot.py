@@ -19,14 +19,6 @@ async def test_starts_sitting_at_origin(robot):
     assert robot.pose == Pose()
 
 
-async def test_stand_and_sit_change_posture(robot):
-    await robot.stand(speed=50)
-    assert (await robot.get_telemetry()).posture is Posture.STANDING
-
-    await robot.sit(speed=50)
-    assert (await robot.get_telemetry()).posture is Posture.SITTING
-
-
 @pytest.mark.parametrize(
     ("direction", "expected_x"), [(Direction.FORWARD, 30.0), (Direction.BACKWARD, -30.0)]
 )
@@ -45,18 +37,6 @@ async def test_walk_after_turn_follows_new_heading(robot):
     assert robot.pose.heading_deg == pytest.approx(90.0)
     assert robot.pose.x_cm == pytest.approx(0.0, abs=1e-9)
     assert robot.pose.y_cm == pytest.approx(10.0)
-
-
-async def test_emergency_stop_blocks_movements_until_reset(robot):
-    await robot.emergency_stop()
-
-    assert (await robot.get_telemetry()).emergency_stopped is True
-    with pytest.raises(EmergencyStopActiveError):
-        await robot.walk(Direction.FORWARD, steps=1, speed=50)
-
-    await robot.reset_emergency_stop()
-    await robot.walk(Direction.FORWARD, steps=1, speed=50)
-    assert robot.pose.x_cm == pytest.approx(10.0)
 
 
 async def test_emergency_stop_interrupts_movement_in_progress():
