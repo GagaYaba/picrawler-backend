@@ -45,6 +45,14 @@ class Telemetry:
     cpu_temperature_celsius: float | None = None
 
 
+class RobotError(Exception):
+    """Base class for robot errors."""
+
+
+class EmergencyStopActiveError(RobotError):
+    """Raised when a movement is requested while the emergency stop is active."""
+
+
 class RobotPort(ABC):
     """Interface implemented by the real robot and by the simulator.
 
@@ -70,6 +78,10 @@ class RobotPort(ABC):
     @abstractmethod
     async def emergency_stop(self) -> None:
         """Stop any movement immediately and refuse new movements until reset."""
+
+    @abstractmethod
+    async def reset_emergency_stop(self) -> None:
+        """Allow movements again after an emergency stop."""
 
     @abstractmethod
     async def get_telemetry(self) -> Telemetry:

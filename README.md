@@ -7,14 +7,18 @@ the real robot and a simulator. The rest of the backend depends only on this int
 
 ## Status
 
-Step 1: project skeleton and `RobotPort` interface. The simulator, safety layer and API
-are not implemented yet.
+- Step 1: project skeleton and `RobotPort` interface.
+- Step 2: `SimulatedRobot`, an in-memory implementation (posture, emergency stop, estimated pose).
+
+The safety layer and the API are not implemented yet. The simulator does not reproduce
+mechanical effects such as drift: it is not evidence of the real robot behaviour.
 
 ## Layout
 
 | Path | Content |
 |---|---|
 | `src/picrawler_backend/domain/` | `RobotPort` interface and data types, no framework dependency |
+| `src/picrawler_backend/adapters/` | `RobotPort` implementations (`SimulatedRobot`) |
 | `tests/unit/` | Unit tests |
 
 ## Local setup

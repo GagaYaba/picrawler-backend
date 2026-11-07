@@ -13,6 +13,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    "pytest-asyncio>=0.24",
     "pytest-cov>=5",
     "ruff>=0.6",
 ]
@@ -22,6 +23,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 addopts = "--cov=picrawler_backend --cov-report=term-missing"
 
 [tool.coverage.report]
