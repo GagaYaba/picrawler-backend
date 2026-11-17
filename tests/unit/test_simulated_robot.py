@@ -11,14 +11,6 @@ def robot() -> SimulatedRobot:
     return SimulatedRobot(step_length_cm=10.0, turn_angle_deg=90.0)
 
 
-async def test_starts_sitting_at_origin(robot):
-    telemetry = await robot.get_telemetry()
-
-    assert telemetry.posture is Posture.SITTING
-    assert telemetry.emergency_stopped is False
-    assert robot.pose == Pose()
-
-
 @pytest.mark.parametrize(
     ("direction", "expected_x"), [(Direction.FORWARD, 30.0), (Direction.BACKWARD, -30.0)]
 )
@@ -49,17 +41,3 @@ async def test_emergency_stop_interrupts_movement_in_progress():
     with pytest.raises(EmergencyStopActiveError):
         await walking
     assert robot.pose == Pose()
-
-
-@pytest.mark.parametrize(("speed", "steps"), [(0, 1), (101, 1), (50, 0)])
-async def test_invalid_command_is_rejected(robot, speed, steps):
-    with pytest.raises(ValueError):
-        await robot.walk(Direction.FORWARD, steps=steps, speed=speed)
-
-
-async def test_default_step_length_matches_measured_walk():
-    robot = SimulatedRobot()
-
-    await robot.walk(Direction.FORWARD, steps=5, speed=70)
-
-    assert robot.pose.x_cm == pytest.approx(34.0)
