@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
@@ -67,11 +68,21 @@ def robot_from_environment() -> RobotPort:
     raise RuntimeError(f"unsupported ROBOT_MODE: {mode!r}")
 
 
+def cors_origins_from_environment() -> list[str]:
+    """Origins allowed to call the API from a browser (CORS_ORIGINS, comma separated).
+
+    Empty by default: no other origin is allowed. Never use ``*``: the API takes a token.
+    """
+    raw = os.environ.get("CORS_ORIGINS", "")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 def create_app(
     robot: RobotPort | None = None,
     api_token: str | None = None,
     heartbeat_timeout_s: float | None = None,
     watchdog_period_s: float = MIN_INTERVAL_S,
+    cors_origins: list[str] | None = None,
 ) -> FastAPI:
     """Create the API. Refuses to start without a strong enough operator token."""
     token = api_token if api_token is not None else os.environ.get("API_TOKEN", "")
@@ -113,6 +124,14 @@ def create_app(
             await task
 
     app = FastAPI(title="PiCrawler control API", version="0.1.0", lifespan=lifespan)
+    origins = cors_origins if cors_origins is not None else cors_origins_from_environment()
+    if origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_methods=["GET", "POST"],
+            allow_headers=["Authorization", "Content-Type"],
+        )
     operator = [Depends(require_operator)]
 
     @app.exception_handler(SafetyLimitError)

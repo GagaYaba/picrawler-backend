@@ -72,3 +72,22 @@ def test_lost_heartbeat_puts_robot_in_sitting_position(simulator):
         time.sleep(0.6)
 
         assert client.get("/telemetry", headers=AUTH).json()["posture"] == "sitting"
+
+
+def test_browser_preflight_is_allowed_only_for_configured_origin(simulator):
+    app = create_app(robot=simulator, api_token=TOKEN, cors_origins=["http://localhost:5173"])
+    client = TestClient(app)
+    preflight = {
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+
+    allowed = client.options(
+        "/commands/walk", headers={"Origin": "http://localhost:5173", **preflight}
+    )
+    refused = client.options(
+        "/commands/walk", headers={"Origin": "http://evil.example", **preflight}
+    )
+
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "access-control-allow-origin" not in refused.headers
