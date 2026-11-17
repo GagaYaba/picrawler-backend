@@ -61,6 +61,9 @@ the header `Authorization: Bearer <API_TOKEN>`.
 
 Copy `.env.template` to `.env`. Never commit `.env` or any secret.
 
+`CORS_ORIGINS` lists the browser origins allowed to call the API (the console, for example
+`http://localhost:5173` in development). Empty by default: no browser origin is allowed.
+
 ## Branches
 
 `main` holds releases only (pull request from `develop`, then a semantic version tag).
